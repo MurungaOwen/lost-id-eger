@@ -76,3 +76,9 @@ class SupabaseDb():
         except Exception as e:
             print(f"Unable to upload image to bucket: {e}")
             return None
+
+    def delete_file_in_bucket(self, bucket_name: str, file_name: str):
+        try:
+            self.db.storage.from_(bucket_name).remove([file_name])
+        except Exception as e:
+            print("Error deleting file from :{} -> error: {}".format(bucket_name, e))

@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
+import uuid
 from werkzeug.utils import secure_filename
 from lib.db import SupabaseDb
-from utils import allowed_file_format
+from utils import allowed_file_format,extract_text_from_image
 
 app = Flask(__name__)
 supabase_db = SupabaseDb()
@@ -12,22 +13,39 @@ def upload_image():
         return jsonify({"error": "No file part in the request"}), 400
     file = request.files['file']
     contact = request.form.get('contact')
-    reg_no = request.form.get('regNo')
 
     
     # If the user does not select a file, the browser submits an empty part without filename
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
-    if file and allowed_file_format(file.filename):
-        # Secure the file name
-        filename = secure_filename(file.filename)
+    extracted_data = extract_text_from_image(file)
+    reg_no = extracted_data.get('reg_no')
+    student_name = extracted_data.get('reg_no')
+    is_id = extracted_data.get('is_id')
+    course = extracted_data.get('course')
+    is_egerton = extracted_data.get('is_egerton')
 
-        # Upload the image to Supabase and get the public URL
+    if is_egerton == "false":
+        return jsonify({"error": "ID you provided is not of Egerton university"}), 400
+    
+    if is_id == "false":
+        return jsonify({"error": "Please upload an id image"}), 400
+    
+    if file and allowed_file_format(file.filename):
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"  # Generate unique filename
+
         bucket_name = "lost-id-images"
-        public_url = supabase_db.upload_id_image(file, bucket_name, filename)
+        public_url = supabase_db.upload_id_image(file, bucket_name, unique_filename)
         
-        if public_url and supabase_db.insert("lostId", {"image_url": public_url, "contact": contact, "reg_no": reg_no}):
+        if public_url and supabase_db.insert("lostId", {
+            "image_url": public_url,
+            "contact": contact,
+            "reg_no": reg_no,
+            "student_name": student_name,
+            "course": course
+        }):
             return jsonify({"message": "File uploaded successfully", "url": public_url}), 200
         else:
             return jsonify({"error": "Failed to upload file"}), 500
