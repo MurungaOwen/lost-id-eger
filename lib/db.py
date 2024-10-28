@@ -15,7 +15,10 @@ class SupabaseDb():
         """inserts a row in our db"""
         try:
             response = self.db.table(tablename).insert(values).execute()
-            return response.data
+            if response.status_code == 409:
+                raise ValueError("The ID has already been uploaded")
+            else:
+                return response.data
         except Exception as e:
             print("unable to insert data :{}".format(e.message))
             return None
@@ -72,20 +75,20 @@ class SupabaseDb():
 
     def upload_id_image(self, image_file, bucket_name: str, file_name: str):
         """Uploads an image and returns the URL to it."""
+        image_file.seek(0) #if file was read reset seek pointer
+        read_file = image_file.read()
         try:
-            response = self.db.storage.from_(bucket_name).upload(file_name, image_file)
-            print("response is: {}".format(response))
+            response = self.db.storage.from_(bucket_name).upload(file_name, read_file,{
+            'contentType': image_file.content_type
+            })
             if response:  # Check if the upload was successful
-                public_url = self.db.storage.from_(bucket_name).get_public_url(file_name)  # Adjust based on your client library         
+                public_url = self.db.storage.from_(bucket_name).get_public_url(file_name)       
                 print("public url is {}".format(public_url))
-                return public_url  # Return the public URL
+                return public_url
             else:
-                print("Upload response was empty.")
                 return None
         except Exception as e:
-            print(f"Unable to upload image to bucket: {e}")
             return None
-
 
     def delete_file_in_bucket(self, bucket_name: str, file_name: str):
         try:
