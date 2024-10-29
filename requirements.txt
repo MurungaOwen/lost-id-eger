@@ -4,3 +4,4 @@ pip
 supabase
 requests
 gunicorn
+flask_cors
