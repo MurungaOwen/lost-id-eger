@@ -68,3 +68,4 @@ websockets                   13.1
 Werkzeug                     3.0.4
 wheel                        0.44.0
 yarl                         1.13.1
+gunicorn
