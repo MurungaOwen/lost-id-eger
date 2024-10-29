@@ -5,3 +5,5 @@ supabase
 requests
 gunicorn
 flask_cors
+python-decouple
+google-generativeai
