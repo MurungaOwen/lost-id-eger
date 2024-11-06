@@ -7,7 +7,7 @@ from lib.db import SupabaseDb
 from utils import allowed_file_format,extract_text_from_image
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "https://lost-id-eger-frontend.vercel.app/"}})
 supabase_db = SupabaseDb()
 
 @app.route('/upload', methods=['POST'])
